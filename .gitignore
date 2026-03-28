@@ -1,0 +1,9 @@
+# Local dev only — do NOT push to GitHub
+config.json
+data/
+__pycache__/
+*.pyc
+*.db
+.env
+.env.local
+static/

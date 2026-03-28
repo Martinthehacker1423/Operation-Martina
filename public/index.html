@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AutoPurple — Operation Martina</title>
+<style>
+:root {
+  --bg:      #080812;
+  --card:    #0f0e1e;
+  --border:  #2a1d5e;
+  --accent:  #7c3aed;
+  --accent2: #a78bfa;
+  --dim:     #4a3f7a;
+  --text:    #d4cff0;
+  --muted:   #7a6eb0;
+  --danger:  #dc2626;
+  --warn:    #d97706;
+  --ok:      #16a34a;
+  --font:    'Inter','Segoe UI',system-ui,sans-serif;
+  --mono:    'JetBrains Mono','Fira Code','Cascadia Code','Menlo',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6}
+a{color:var(--accent2);text-decoration:none}
+button{cursor:pointer;border:none;outline:none;font-family:inherit}
+input,textarea{font-family:inherit;outline:none;color:var(--text)}
+
+/* ── Layout ── */
+#root{display:flex;flex-direction:column;height:100vh}
+
+/* ── Views ── */
+.view{display:none;flex:1;overflow:hidden}
+.view.active{display:flex}
+
+/* ── Login ── */
+#v-login{align-items:center;justify-content:center;flex-direction:column;gap:32px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:48px 56px;width:420px;text-align:center}
+.ap-logo{font-size:11px;letter-spacing:4px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.ap-brand{font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:1px}
+.ap-op{margin-top:24px;font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.ap-op span{color:var(--text);font-weight:600}
+.login-divider{width:40px;height:1px;background:var(--border);margin:20px auto}
+.login-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;text-align:left}
+.login-input{width:100%;background:#0a091a;border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-size:15px;font-family:var(--mono);color:var(--text);transition:border-color .2s}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{margin-top:20px;width:100%;background:var(--accent);color:#fff;border-radius:6px;padding:13px;font-size:14px;font-weight:600;letter-spacing:.5px;transition:background .2s}
+.login-btn:hover{background:#6d28d9}
+.login-err{color:var(--danger);font-size:12px;margin-top:10px;min-height:18px}
+.login-footer{font-size:11px;color:var(--dim);margin-top:32px}
+
+/* ── Welcome ── */
+#v-welcome{flex-direction:column;align-items:center;justify-content:center;gap:0;padding:40px;overflow-y:auto}
+.welcome-wrap{max-width:640px;width:100%}
+.welcome-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+.welcome-logo{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.welcome-logo strong{display:block;font-size:18px;color:var(--accent2);letter-spacing:1px}
+.astra-card{background:var(--card);border:1px solid var(--accent);border-left:3px solid var(--accent);border-radius:8px;padding:24px 28px;margin-bottom:24px;position:relative}
+.astra-badge{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:12px;font-weight:600}
+.astra-text{font-size:13.5px;color:var(--text);white-space:pre-line;line-height:1.8}
+.welcome-warn{background:#1a0808;border:1px solid #5a1010;border-radius:8px;padding:20px 24px;margin-bottom:28px;font-size:13px;color:#f87171}
+.welcome-warn strong{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;color:#dc2626}
+.accept-btn{display:block;width:100%;background:var(--accent);color:#fff;border-radius:8px;padding:16px;font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:background .2s;text-align:center}
+.accept-btn:hover{background:#6d28d9}
+.accept-sub{font-size:11px;color:var(--muted);text-align:center;margin-top:8px;letter-spacing:.5px}
+
+/* ── Dashboard ── */
+#v-dashboard{flex-direction:column}
+.dash-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0}
+.dash-logo{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.dash-logo strong{display:block;font-size:16px;color:var(--accent2)}
+.timer-wrap{text-align:center}
+.timer-label{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.timer-display{font-family:var(--mono);font-size:28px;font-weight:700;letter-spacing:2px;color:var(--text);line-height:1}
+.timer-display.urgent{color:var(--danger)}
+.timer-display.warning{color:var(--warn)}
+.timer-sub{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.5px}
+.dash-user{font-size:12px;color:var(--muted);text-align:right}
+.dash-user strong{display:block;color:var(--text)}
+
+.dash-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:260px;background:var(--card);border-right:1px solid var(--border);padding:20px 16px;overflow-y:auto;flex-shrink:0}
+.sidebar-title{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
+.phase-item{border-radius:8px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:background .15s;border:1px solid transparent}
+.phase-item:hover{background:#140f28}
+.phase-item.active-item{background:#140f28;border-color:var(--border)}
+.phase-item.selected{background:#1a1340;border-color:var(--accent)}
+.pi-num{font-size:10px;letter-spacing:1px;color:var(--muted);font-family:var(--mono)}
+.pi-title{font-size:12px;font-weight:600;color:var(--text);margin:2px 0}
+.pi-status{font-size:11px}
+.pi-status.locked{color:var(--dim)}
+.pi-status.active{color:#60a5fa}
+.pi-status.passed{color:var(--ok)}
+.pi-status.failed{color:var(--danger)}
+.pi-status.evaluating{color:var(--warn)}
+.pi-status.submitted{color:var(--muted)}
+
+.sidebar-astra{margin-top:24px}
+.sidebar-astra-title{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.astra-pill{font-size:11px;color:var(--accent2);padding:6px 10px;background:#130d2a;border:1px solid #2a1d5e;border-radius:6px;margin-bottom:6px;cursor:pointer}
+.astra-pill:hover{border-color:var(--accent)}
+
+.main-pane{flex:1;overflow-y:auto;padding:28px 32px}
+
+/* ── Phase view ── */
+.phase-header{margin-bottom:24px}
+.phase-tag{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.phase-title{font-size:22px;font-weight:700;color:var(--text)}
+.phase-sub{font-size:13px;color:var(--accent2);margin-top:4px}
+.phase-timer-bar{background:#1a0808;border:1px solid #5a1010;border-radius:6px;padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.phase-timer-bar .ptl-label{font-size:10px;letter-spacing:2px;color:#f87171;text-transform:uppercase}
+.phase-timer-bar .ptl-val{font-family:var(--mono);font-size:16px;font-weight:700;color:#fca5a5}
+
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:16px}
+.sc-title{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.desc-text{font-size:13.5px;line-height:1.8;color:var(--text);white-space:pre-line}
+.desc-text strong{color:#e2dcfc;font-weight:600}
+.req-list{list-style:none;display:flex;flex-direction:column;gap:7px}
+.req-list li{font-size:13px;color:var(--text);padding-left:20px;position:relative}
+.req-list li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:11px;top:2px}
+.req-list li strong{color:var(--accent2)}
+
+.chat-wrap{display:flex;flex-direction:column;gap:0;margin-bottom:8px}
+.chat-messages{background:#070611;border:1px solid var(--border);border-radius:8px 8px 0 0;padding:16px;min-height:280px;max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.chat-msg{display:flex;flex-direction:column;gap:4px}
+.chat-msg.user{align-items:flex-end}
+.chat-msg.assistant{align-items:flex-start}
+.chat-bubble{padding:10px 14px;border-radius:10px;max-width:85%;font-size:13px;line-height:1.7}
+.chat-msg.user .chat-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.chat-msg.assistant .chat-bubble{background:#15102e;border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px}
+.chat-speaker{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.chat-input-row{display:flex;gap:0;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+.chat-input{flex:1;background:#0a091a;padding:12px 16px;font-size:13px;border:none;resize:none;min-height:56px}
+.chat-send{background:var(--accent);color:#fff;padding:0 20px;font-size:13px;font-weight:600;flex-shrink:0;transition:background .15s}
+.chat-send:hover{background:#6d28d9}
+.chat-send:disabled{background:var(--dim);cursor:default}
+.chat-hint{font-size:11px;color:var(--muted);margin-top:6px}
+
+.submit-wrap{margin-top:16px}
+.submit-label{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.submit-textarea{width:100%;background:#0a091a;border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:13px;min-height:180px;resize:vertical;color:var(--text);line-height:1.7;transition:border-color .2s}
+.submit-textarea:focus{border-color:var(--accent)}
+.submit-btn{margin-top:12px;background:var(--accent);color:#fff;border-radius:6px;padding:12px 28px;font-size:14px;font-weight:600;letter-spacing:.5px;transition:background .15s}
+.submit-btn:hover{background:#6d28d9}
+.submit-btn:disabled{background:var(--dim);cursor:default}
+.submit-hint{font-size:11px;color:var(--muted);margin-top:8px}
+
+.eval-card{background:#0a1a10;border:1px solid #1a4a28;border-radius:8px;padding:20px 24px;margin-top:20px}
+.eval-card.fail{background:#1a0808;border-color:#5a1010}
+.eval-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eval-badge{font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:4px}
+.eval-badge.pass{background:#166534;color:#86efac}
+.eval-badge.fail{background:#7f1d1d;color:#fca5a5}
+.eval-score{font-size:28px;font-weight:700;font-family:var(--mono)}
+.eval-score.pass{color:#4ade80}
+.eval-score.fail{color:#f87171}
+.eval-summary{font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.7}
+.eval-section{margin-top:12px}
+.eval-section-title{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.eval-list{display:flex;flex-direction:column;gap:5px}
+.eval-list li{font-size:12px;color:var(--text);list-style:none;padding-left:16px;position:relative}
+.eval-list li::before{content:'•';position:absolute;left:0;color:var(--accent2)}
+.eval-retry{margin-top:14px;font-size:12px;color:#f87171}
+
+/* ── Astra modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+.modal-box{background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:36px;max-width:520px;width:90%}
+.modal-title{font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+.modal-text{font-size:13.5px;white-space:pre-line;line-height:1.8;color:var(--text);margin:16px 0}
+.modal-close{background:var(--accent);color:#fff;border-radius:6px;padding:10px 24px;font-size:13px;font-weight:600}
+.modal-close:hover{background:#6d28d9}
+
+/* ── Report ── */
+#v-report{flex-direction:column;align-items:center;padding:48px 32px;overflow-y:auto;gap:0}
+.report-wrap{max-width:700px;width:100%}
+.report-header{margin-bottom:28px;text-align:center}
+.report-title{font-size:24px;font-weight:700;color:var(--text)}
+.report-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.report-phases{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.rp-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center}
+.rp-card.pass{border-color:#16a34a44;background:#0a1a10}
+.rp-card.fail{border-color:#dc262644;background:#1a0808}
+.rp-title{font-size:11px;color:var(--muted);margin-bottom:6px}
+.rp-score{font-size:26px;font-weight:700;font-family:var(--mono)}
+.rp-score.pass{color:#4ade80}
+.rp-score.fail{color:#f87171}
+.rp-verdict{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.rp-verdict.pass{color:#4ade80}
+.rp-verdict.fail{color:#f87171}
+.report-text{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:24px;font-size:13px;line-height:1.85;color:var(--text);white-space:pre-line;margin-bottom:20px}
+.credential-card{background:#0a0f1a;border:2px solid var(--accent);border-radius:10px;padding:24px;text-align:center;margin-top:8px}
+.cred-label{font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+.cred-code{font-family:var(--mono);font-size:18px;font-weight:700;color:#a78bfa;letter-spacing:2px;word-break:break-all}
+.cred-hint{font-size:11px;color:var(--muted);margin-top:10px}
+
+/* ── Admin ── */
+#v-admin{flex-direction:column;padding:32px;overflow-y:auto;gap:24px}
+.admin-section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px}
+.admin-title{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.admin-table{width:100%;border-collapse:collapse;font-size:12px}
+.admin-table th{text-align:left;color:var(--muted);font-weight:500;padding:6px 10px;border-bottom:1px solid var(--border)}
+.admin-table td{padding:6px 10px;border-bottom:1px solid #1a1530;vertical-align:top}
+.admin-log{max-height:300px;overflow-y:auto;font-size:11px;font-family:var(--mono);color:var(--text);white-space:pre-wrap;word-break:break-word}
+.admin-override{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.override-btn{font-size:11px;padding:5px 12px;border-radius:5px;font-weight:600}
+.override-pass{background:#166534;color:#86efac}
+.override-fail{background:#7f1d1d;color:#fca5a5}
+
+/* ── Config section ── */
+.cfg-label{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.cfg-input{width:100%;background:#07060f;border:1px solid var(--border);border-radius:6px;padding:9px 12px;font-size:13px;font-family:var(--mono);color:var(--text);transition:border-color .2s}
+.cfg-input:focus{border-color:var(--accent);outline:none}
+.cfg-hint{font-size:11px;color:var(--dim);margin-top:4px}
+.cfg-status{font-size:11px;margin-top:4px}
+.cfg-status.set{color:var(--ok)}
+.cfg-status.unset{color:var(--warn)}
+.cfg-save-btn{background:var(--accent);color:#fff;border-radius:6px;padding:9px 22px;font-size:13px;font-weight:600;transition:background .15s}
+.cfg-save-btn:hover{background:#6d28d9}
+.cfg-toggle{background:#1a1530;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--muted);cursor:pointer}
+
+/* ── Expired ── */
+#v-expired{align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.expired-box{background:var(--card);border:1px solid #5a1010;border-radius:12px;padding:48px;max-width:500px;text-align:center}
+.expired-title{font-size:28px;font-weight:700;color:var(--danger);margin-bottom:12px}
+.expired-sub{font-size:14px;color:var(--muted)}
+
+/* ── Utilities ── */
+.mt{margin-top:16px}
+.txt-muted{color:var(--muted);font-size:12px}
+.badge{font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px;text-transform:uppercase;display:inline-block}
+.badge.locked{background:#1a1a2e;color:var(--dim)}
+.badge.active{background:#1a2a4e;color:#60a5fa}
+.badge.passed{background:#14532d;color:#86efac}
+.badge.failed{background:#7f1d1d;color:#fca5a5}
+.badge.evaluating{background:#44330a;color:#fcd34d}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- ── Login ── -->
+  <div id="v-login" class="view">
+    <div class="login-card">
+      <div class="ap-logo">AutoPurple Systems</div>
+      <div class="ap-brand">AutoPurple</div>
+      <div class="ap-op">Operation <span>MARTINA</span></div>
+      <div class="login-divider"></div>
+      <div class="login-label">Access Code</div>
+      <input id="login-code" class="login-input" type="text" placeholder="XXXX-XXXX-XXXX"
+             autocomplete="off" spellcheck="false"/>
+      <button class="login-btn" onclick="doLogin()">ENTER SYSTEM</button>
+      <div id="login-err" class="login-err"></div>
+    </div>
+    <div class="login-footer">AutoPurple Internal Assessment System · Authorized Access Only</div>
+  </div>
+
+  <!-- ── Welcome ── -->
+  <div id="v-welcome" class="view">
+    <div class="welcome-wrap">
+      <div class="welcome-header">
+        <div>
+          <div class="welcome-logo"><strong>AutoPurple</strong>Internal Assessment System</div>
+        </div>
+      </div>
+      <div class="astra-card" id="welcome-astra">
+        <div class="astra-badge">▸ Message from Astra</div>
+        <div class="astra-text" id="welcome-astra-text">Loading...</div>
+      </div>
+      <div class="welcome-warn">
+        <strong>⚠ Read this before you proceed</strong>
+        The trial clock starts the moment you click ACCEPT. It runs for <strong>30 days</strong> continuously. It cannot be paused, paused, or reset. This is deliberate. If you are not ready to begin, close this window and return when you are.
+        <br/><br/>
+        Phase 1 begins immediately with a 72-hour sub-deadline. Phase 4, when you reach it, will have a 24-hour sub-deadline.
+        <br/><br/>
+        The system will record everything. All submissions and dialogue are evaluated by AI and reviewed by AutoPurple.
+      </div>
+      <button class="accept-btn" onclick="acceptTrial()">ACCEPT THE TRIAL — BEGIN</button>
+      <div class="accept-sub">This action is final. The 30-day clock starts immediately.</div>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="v-dashboard" class="view">
+    <div class="dash-header">
+      <div>
+        <div class="dash-logo"><strong>AutoPurple</strong>Operation MARTINA</div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-label">Trial Time Remaining</div>
+        <div id="timer-display" class="timer-display">--d --h --m --s</div>
+        <div class="timer-sub">Non-pausable · Do not close this system</div>
+      </div>
+      <div class="dash-user">
+        <strong id="dash-name">—</strong>
+        <span>Candidate</span>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="sidebar">
+        <div class="sidebar-title">Phases</div>
+        <div id="phase-nav"></div>
+        <div class="sidebar-astra" id="astra-sidebar" style="display:none">
+          <div class="sidebar-astra-title">Messages from Astra</div>
+          <div id="astra-pills"></div>
+        </div>
+      </div>
+      <div class="main-pane" id="main-pane">
+        <div style="color:var(--muted);font-size:13px;padding-top:60px;text-align:center">
+          Select a phase from the sidebar to begin.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Report ── -->
+  <div id="v-report" class="view">
+    <div class="report-wrap">
+      <div class="report-header">
+        <div class="ap-logo" style="font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">AutoPurple Systems</div>
+        <div class="report-title">Trial Evaluation Report</div>
+        <div class="report-sub" id="report-sub">Operation MARTINA — Final Assessment</div>
+      </div>
+      <div class="report-phases" id="report-phases"></div>
+      <div class="report-text" id="report-text"></div>
+      <div id="report-credential"></div>
+      <div id="report-astra" style="margin-top:20px"></div>
+    </div>
+  </div>
+
+  <!-- ── Admin ── -->
+  <div id="v-admin" class="view">
+    <h2 style="font-size:16px;color:var(--accent2)">Admin — Control Panel</h2>
+
+    <!-- System Config -->
+    <div class="admin-section" id="admin-config-section">
+      <div class="admin-title">System Configuration</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <div class="cfg-label">Anthropic API Key</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="cfg-apikey" class="cfg-input" type="password"
+                   placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false"/>
+            <button class="cfg-toggle" onclick="toggleApiKeyVisibility()" id="cfg-toggle-btn" title="Show/hide">👁</button>
+          </div>
+          <div id="cfg-apikey-status" class="cfg-status"></div>
+        </div>
+        <div>
+          <div class="cfg-label">Candidate Access Code</div>
+          <input id="cfg-code" class="cfg-input" type="text"
+                 placeholder="AURORA-REDLINE-7749" autocomplete="off" spellcheck="false"/>
+          <div class="cfg-hint">The code Martina uses to log in</div>
+        </div>
+        <div>
+          <div class="cfg-label">Candidate Name</div>
+          <input id="cfg-name" class="cfg-input" type="text" placeholder="Martina"/>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="cfg-save-btn" onclick="saveConfig()">Save Configuration</button>
+        <span id="cfg-save-msg" style="font-size:12px;color:var(--ok);display:none">✓ Saved</span>
+        <span id="cfg-save-err" style="font-size:12px;color:var(--danger);display:none"></span>
+      </div>
+    </div>
+
+    <div class="admin-section" id="admin-overview"></div>
+    <div class="admin-section">
+      <div class="admin-title">Phase Overrides</div>
+      <div id="admin-overrides"></div>
+    </div>
+    <div class="admin-section">
+      <div class="admin-title">Submission Log</div>
+      <div class="admin-log" id="admin-log"></div>
+    </div>
+  </div>
+
+  <!-- ── Expired ── -->
+  <div id="v-expired" class="view">
+    <div class="expired-box">
+      <div class="expired-title">Trial Expired</div>
+      <div class="expired-sub">The 30-day trial window has closed.<br/>Contact AutoPurple to discuss next steps.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Astra Modal -->
+<div id="astra-modal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">▸ Message from Astra</div>
+    <div class="modal-text" id="astra-modal-text"></div>
+    <button class="modal-close" onclick="closeAstraModal()">Acknowledged</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ── State ──────────────────────────────────────────────────────────────────────
+let S = {
+  role: null,        // 'candidate' | 'admin'
+  name: '',
+  status: null,      // last /api/status response
+  currentPhase: null,
+  timerInterval: null,
+  pollInterval: null,
+  adminKey: '',
+};
+
+// ── Routing ────────────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// ── Login ──────────────────────────────────────────────────────────────────────
+document.getElementById('login-code').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const code = document.getElementById('login-code').value.trim();
+  if (!code) return;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  try {
+    const r = await api('/api/login', 'POST', { code });
+    S.role = r.role;
+    S.name = r.name || 'Admin';
+    if (r.role === 'admin') {
+      S.adminKey = code;
+      await loadAdmin();
+      showView('v-admin');
+    } else {
+      await initCandidate();
+    }
+  } catch (e) {
+    err.textContent = e.message || 'Invalid access code';
+  }
+}
+
+// ── Candidate init ─────────────────────────────────────────────────────────────
+async function initCandidate() {
+  document.getElementById('dash-name').textContent = S.name;
+  const st = await api('/api/status');
+  S.status = st;
+
+  if (st.expired) { showView('v-expired'); return; }
+
+  if (st.status === 'complete' || st.status === 'failed') {
+    await showReport(st);
+    return;
+  }
+
+  if (!st.started) {
+    // Show welcome with Astra pre-trial message
+    try {
+      const astra = await api('/api/astra');
+      // No messages yet (trial not started) — show placeholder
+      document.getElementById('welcome-astra-text').textContent =
+        'AutoPurple has set a trial before you.\n\nYou will have 30 days. Four phases. No pauses, no resets.\n\nWhen you are ready — and only when you are ready — begin.\n\n— Astra';
+    } catch(_) {}
+    showView('v-welcome');
+    return;
+  }
+
+  showView('v-dashboard');
+  renderSidebar(st);
+  startPolling();
+}
+
+// ── Welcome / accept ───────────────────────────────────────────────────────────
+async function acceptTrial() {
+  try {
+    await api('/api/start', 'POST', {});
+    const st = await api('/api/status');
+    S.status = st;
+    showView('v-dashboard');
+    renderSidebar(st);
+    startPolling();
+    // Show Astra message
+    const astra = await api('/api/astra');
+    if (astra.length > 0) showAstraModal(astra[astra.length - 1].content);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ── Polling ────────────────────────────────────────────────────────────────────
+function startPolling() {
+  if (S.timerInterval) clearInterval(S.timerInterval);
+  if (S.pollInterval)  clearInterval(S.pollInterval);
+  updateTimer();
+  S.timerInterval = setInterval(updateTimer, 1000);
+  S.pollInterval  = setInterval(pollStatus, 8000);
+}
+
+async function pollStatus() {
+  try {
+    const st = await api('/api/status');
+    S.status = st;
+    renderSidebar(st);
+    if (st.expired) { clearInterval(S.timerInterval); clearInterval(S.pollInterval); showView('v-expired'); }
+    if (st.status === 'complete' || st.status === 'failed') {
+      clearInterval(S.timerInterval); clearInterval(S.pollInterval);
+      await showReport(st);
+    }
+    // Check for new Astra messages
+    checkAstra();
+  } catch (_) {}
+}
+
+let _lastAstraCount = 0;
+async function checkAstra() {
+  try {
+    const msgs = await api('/api/astra');
+    if (msgs.length > _lastAstraCount) {
+      const newest = msgs[msgs.length - 1];
+      showAstraModal(newest.content);
+      _lastAstraCount = msgs.length;
+    }
+    renderAstraSidebar(msgs);
+  } catch (_) {}
+}
+
+function updateTimer() {
+  if (!S.status?.time_left) return;
+  const tl   = S.status.time_left;
+  const secs = tl.total - (Math.floor(Date.now()/1000) - Math.floor(Date.now()/1000 - tl.total));
+  // Use server value + client-side countdown
+  const elapsed = Math.floor((Date.now() - _timerStart) / 1000);
+  const rem = Math.max(0, _timerTotal - elapsed);
+  const d = Math.floor(rem / 86400);
+  const h = Math.floor((rem % 86400) / 3600);
+  const m = Math.floor((rem % 3600) / 60);
+  const s = rem % 60;
+  const el = document.getElementById('timer-display');
+  el.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  el.className = 'timer-display' + (rem < 86400 ? ' urgent' : rem < 259200 ? ' warning' : '');
+}
+
+let _timerStart = Date.now();
+let _timerTotal = 0;
+
+// When we get status, sync timer
+function syncTimer(tl) {
+  if (!tl) return;
+  _timerTotal = tl.total;
+  _timerStart = Date.now();
+  updateTimer();
+}
+
+// Override pollStatus to sync timer
+const _origPoll = pollStatus;
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+function renderSidebar(st) {
+  syncTimer(st.time_left);
+  const nav = document.getElementById('phase-nav');
+  nav.innerHTML = '';
+  for (const ph of st.phases) {
+    const el = document.createElement('div');
+    el.className = 'phase-item' + (S.currentPhase === ph.phase_num ? ' selected' : '');
+    const statusLabel = {
+      locked: '🔒 Locked', active: '▶ Active', submitted: '⏳ Evaluating',
+      evaluating: '⏳ Evaluating', passed: '✓ Passed', failed: '✗ Failed'
+    }[ph.status] || ph.status;
+    el.innerHTML = `
+      <div class="pi-num">PHASE ${String(ph.phase_num).padStart(2,'0')}</div>
+      <div class="pi-title">${ph.title.split('—')[1]?.trim() || ph.title}</div>
+      <div class="pi-status ${ph.status}">${statusLabel}${ph.score != null ? ' · '+ph.score+'/100' : ''}</div>
+    `;
+    if (ph.status !== 'locked') el.addEventListener('click', () => loadPhase(ph.phase_num));
+    nav.appendChild(el);
+  }
+}
+
+function renderAstraSidebar(msgs) {
+  if (!msgs.length) return;
+  const wrap = document.getElementById('astra-sidebar');
+  wrap.style.display = 'block';
+  const pills = document.getElementById('astra-pills');
+  pills.innerHTML = '';
+  msgs.forEach((m, i) => {
+    const el = document.createElement('div');
+    el.className = 'astra-pill';
+    el.textContent = `Message ${i+1} — Phase ${m.phase}`;
+    el.addEventListener('click', () => showAstraModal(m.content));
+    pills.appendChild(el);
+  });
+  _lastAstraCount = msgs.length;
+}
+
+// ── Phase rendering ────────────────────────────────────────────────────────────
+async function loadPhase(num) {
+  S.currentPhase = num;
+  // Update sidebar selection
+  document.querySelectorAll('.phase-item').forEach((el, i) => {
+    el.classList.toggle('selected', i+1 === num);
+  });
+  const pane = document.getElementById('main-pane');
+  pane.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span>Loading...</div>';
+  try {
+    const ph = await api(`/api/phase/${num}`);
+    renderPhase(ph, pane);
+  } catch (e) {
+    pane.innerHTML = `<div style="color:var(--danger);padding:32px">${e.message}</div>`;
+  }
+}
+
+function renderPhase(ph, pane) {
+  const subTimer = ph.sub_time_left ? renderSubTimer(ph.sub_time_left, ph.sub_hours) : '';
+  const reqItems = ph.requirements.map(r => `<li>${escHtml(r)}</li>`).join('');
+  const descHtml = escHtml(ph.description).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  const evalHtml = ph.status === 'passed' || ph.status === 'failed' ? renderEval(ph.eval, ph.status) : '';
+
+  let dialogSection = '';
+  if (ph.has_dialog && (ph.status === 'active' || ph.status === 'passed' || ph.status === 'failed')) {
+    dialogSection = renderDialog(ph);
+  }
+
+  let submitSection = '';
+  if (ph.submission_type !== 'dialog' && (ph.status === 'active' || ph.status === 'failed')) {
+    const label = ph.phase_num === 4
+      ? 'Write your immediate response to the CTO here, then use the dialogue above to handle the crisis conversation. Submit this text when you are ready to finalise your Phase 4 evaluation.'
+      : 'Paste or type your submission here. Attach supporting files if available.';
+    submitSection = `
+      <div class="submit-wrap section-card">
+        <div class="sc-title">Your Submission</div>
+        <div class="submit-label">${escHtml(label)}</div>
+        <textarea id="submit-text-${ph.phase_num}" class="submit-textarea"
+          placeholder="Enter your submission here...">${escHtml(ph.submission_text || '')}</textarea>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
+          <button class="submit-btn" onclick="submitPhase(${ph.phase_num})" id="submit-btn-${ph.phase_num}">
+            Submit for Evaluation
+          </button>
+          <span class="submit-hint">Submissions are final. Ensure your work is complete before submitting.</span>
+        </div>
+      </div>`;
+  } else if (ph.submission_type !== 'dialog' && ph.status !== 'locked' && ph.submission_text) {
+    submitSection = `
+      <div class="section-card">
+        <div class="sc-title">Your Submission (Recorded)</div>
+        <div style="font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:200px;overflow-y:auto">${escHtml(ph.submission_text)}</div>
+      </div>`;
+  }
+
+  if (ph.submission_type === 'dialog' && ph.status === 'active') {
+    submitSection = `
+      <div class="section-card" style="background:#0a0f1a;border-color:#1a2a4a">
+        <div class="sc-title">End Dialogue &amp; Submit</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">When you have completed the minimum ${ph.min_exchanges} exchanges and are satisfied with the conversation, finalise your submission. The full transcript will be evaluated.</p>
+        <button class="submit-btn" onclick="submitDialogPhase(${ph.phase_num})" id="submit-btn-${ph.phase_num}">
+          Finalise &amp; Submit Dialogue
+        </button>
+      </div>`;
+  }
+
+  pane.innerHTML = `
+    <div class="phase-header">
+      <div class="phase-tag">AutoPurple — Executive Trial</div>
+      <div class="phase-title">${escHtml(ph.title)}</div>
+      <div class="phase-sub">${escHtml(ph.subtitle)}</div>
+    </div>
+    ${subTimer}
+    <div class="section-card">
+      <div class="sc-title">Brief</div>
+      <div class="desc-text">${descHtml}</div>
+    </div>
+    <div class="section-card">
+      <div class="sc-title">Requirements</div>
+      <ul class="req-list">${reqItems}</ul>
+    </div>
+    ${dialogSection}
+    ${submitSection}
+    ${evalHtml}
+  `;
+  // Start sub-timer countdown if active
+  if (ph.sub_time_left && ph.status === 'active') {
+    startSubTimer(ph.phase_num, ph.sub_time_left.total);
+  }
+}
+
+function renderSubTimer(tl, hours) {
+  return `
+    <div class="phase-timer-bar" id="sub-timer-bar-wrap">
+      <div class="ptl-label">⚠ Phase Deadline</div>
+      <div class="ptl-val" id="sub-timer-display">--h --m --s</div>
+      <div style="font-size:11px;color:#f87171;margin-left:auto">${hours}h from unlock · Cannot be extended</div>
+    </div>`;
+}
+
+let _subTimerInterval = null;
+let _subStart = Date.now();
+let _subTotal = 0;
+
+function startSubTimer(phaseNum, totalSecs) {
+  _subTotal = totalSecs;
+  _subStart = Date.now();
+  if (_subTimerInterval) clearInterval(_subTimerInterval);
+  _subTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - _subStart) / 1000);
+    const rem = Math.max(0, _subTotal - elapsed);
+    const h = Math.floor(rem / 3600);
+    const m = Math.floor((rem % 3600) / 60);
+    const s = rem % 60;
+    const el = document.getElementById('sub-timer-display');
+    if (el) el.textContent = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  }, 1000);
+}
+
+function renderDialog(ph) {
+  const msgs = ph.messages || [];
+  const msgHtml = msgs.map(m => {
+    const isUser = m.role === 'user';
+    const speaker = isUser ? 'You' : 'Contact';
+    return `<div class="chat-msg ${m.role}">
+      <div class="chat-speaker">${speaker}</div>
+      <div class="chat-bubble">${escHtml(m.content)}</div>
+    </div>`;
+  }).join('');
+
+  const canChat = ph.status === 'active';
+  const exchangeInfo = `${ph.user_exchanges}/${ph.min_exchanges} exchanges`;
+
+  return `
+    <div class="section-card">
+      <div class="sc-title">Live Dialogue · ${exchangeInfo}</div>
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-msgs-${ph.phase_num}">${msgHtml || '<div style="color:var(--muted);font-size:12px;padding:8px">The dialogue begins when you send your first message.</div>'}</div>
+        ${canChat ? `
+        <div class="chat-input-row">
+          <textarea id="chat-input-${ph.phase_num}" class="chat-input"
+            placeholder="Type your message and press Enter (Shift+Enter for new line)…"
+            onkeydown="chatKeydown(event,${ph.phase_num})"></textarea>
+          <button class="chat-send" onclick="sendChat(${ph.phase_num})" id="chat-send-${ph.phase_num}">Send</button>
+        </div>` : ''}
+      </div>
+      <div class="chat-hint">Minimum ${ph.min_exchanges} exchanges required before you can submit.</div>
+    </div>`;
+}
+
+function renderEval(ev, status) {
+  if (!ev || !Object.keys(ev).length) return '';
+  const passed = ev.passed;
+  const cls    = passed ? '' : ' fail';
+  const dimScores = ev.dimension_scores
+    ? Object.entries(ev.dimension_scores).map(([k,v]) =>
+        `<tr><td style="color:var(--muted);text-transform:capitalize">${k.replace(/_/g,' ')}</td><td style="font-family:var(--mono)">${v}/25</td></tr>`
+      ).join('') : '';
+  return `
+    <div class="eval-card${cls}">
+      <div class="eval-header">
+        <span class="eval-badge ${passed ? 'pass' : 'fail'}">${passed ? 'PASSED' : 'FAILED'}</span>
+        <span class="eval-score ${passed ? 'pass' : 'fail'}">${ev.score}/100</span>
+      </div>
+      <div class="eval-summary">${escHtml(ev.feedback_summary || '')}</div>
+      ${dimScores ? `<table style="font-size:12px;border-collapse:collapse;margin-bottom:12px">${dimScores}</table>` : ''}
+      ${ev.strengths?.length ? `<div class="eval-section"><div class="eval-section-title">Strengths</div><ul class="eval-list">${ev.strengths.map(s=>`<li>${escHtml(s)}</li>`).join('')}</ul></div>` : ''}
+      ${ev.improvements?.length ? `<div class="eval-section mt"><div class="eval-section-title">Areas for Development</div><ul class="eval-list">${ev.improvements.map(s=>`<li>${escHtml(s)}</li>`).join('')}</ul></div>` : ''}
+      ${!passed ? '<div class="eval-retry">This phase did not meet the passing threshold. Revise your submission and resubmit.</div>' : ''}
+    </div>`;
+}
+
+// ── Chat actions ───────────────────────────────────────────────────────────────
+function chatKeydown(e, num) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(num); }
+}
+
+async function sendChat(num) {
+  const inp = document.getElementById(`chat-input-${num}`);
+  const btn = document.getElementById(`chat-send-${num}`);
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  appendChatMsg(num, 'user', msg);
+  try {
+    const r = await api(`/api/phase/${num}/chat`, 'POST', { message: msg });
+    appendChatMsg(num, 'assistant', r.reply);
+    // Refresh to update exchange count
+    const ph = await api(`/api/phase/${num}`);
+    // Update exchange hint
+    const pane = document.getElementById('main-pane');
+    const hint = pane.querySelector('.chat-hint');
+    if (hint) hint.textContent = `Minimum ${ph.min_exchanges} exchanges required before you can submit. (${ph.user_exchanges} sent)`;
+  } catch (e) {
+    appendChatMsg(num, 'assistant', `[Error: ${e.message}]`);
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Send';
+}
+
+function appendChatMsg(num, role, content) {
+  const el = document.getElementById(`chat-msgs-${num}`);
+  if (!el) return;
+  const speaker = role === 'user' ? 'You' : 'Contact';
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  div.innerHTML = `<div class="chat-speaker">${speaker}</div><div class="chat-bubble">${escHtml(content)}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Submission ─────────────────────────────────────────────────────────────────
+async function submitPhase(num) {
+  const txt = document.getElementById(`submit-text-${num}`)?.value?.trim();
+  if (!txt || txt.length < 50) { alert('Submission is too short. Please complete your work before submitting.'); return; }
+  if (!confirm(`Submit Phase ${num} for evaluation? This action cannot be undone.`)) return;
+  const btn = document.getElementById(`submit-btn-${num}`);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Evaluating…';
+  try {
+    const r = await api(`/api/phase/${num}/submit`, 'POST', { text: txt });
+    await pollStatus();
+    await loadPhase(num);
+  } catch (e) {
+    alert(e.message);
+    btn.disabled = false;
+    btn.textContent = 'Submit for Evaluation';
+  }
+}
+
+async function submitDialogPhase(num) {
+  if (!confirm(`Finalise the Phase ${num} dialogue and submit for evaluation? This cannot be undone.`)) return;
+  const btn = document.getElementById(`submit-btn-${num}`);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Evaluating…';
+  try {
+    await api(`/api/phase/${num}/submit`, 'POST', { text: '[DIALOGUE SUBMISSION — see transcript]' });
+    await pollStatus();
+    await loadPhase(num);
+  } catch (e) {
+    alert(e.message);
+    btn.disabled = false;
+    btn.textContent = 'Finalise & Submit Dialogue';
+  }
+}
+
+// ── Report ─────────────────────────────────────────────────────────────────────
+async function showReport(st) {
+  clearInterval(S.timerInterval);
+  clearInterval(S.pollInterval);
+  clearInterval(_subTimerInterval);
+
+  const rep = st.report;
+  if (!rep) {
+    showView('v-dashboard'); // Wait for report to generate
+    renderSidebar(st);
+    startPolling();
+    return;
+  }
+
+  const phasesEl = document.getElementById('report-phases');
+  phasesEl.innerHTML = st.phases.map(ph => {
+    const cls = ph.passed ? 'pass' : 'fail';
+    return `<div class="rp-card ${cls}">
+      <div class="rp-title">Phase ${ph.phase_num}</div>
+      <div class="rp-score ${cls}">${ph.score ?? '—'}/100</div>
+      <div class="rp-verdict ${cls}">${ph.passed ? 'PASSED' : 'FAILED'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('report-text').textContent = rep.text || 'No report available.';
+  document.getElementById('report-sub').textContent =
+    `Operation MARTINA · ${rep.passed ? 'TRIAL COMPLETED — PASSED' : 'TRIAL COMPLETED — NOT PASSED'}`;
+
+  const credEl = document.getElementById('report-credential');
+  if (rep.passed && rep.credential) {
+    credEl.innerHTML = `
+      <div class="credential-card">
+        <div class="cred-label">▸ Verification Credential</div>
+        <div class="cred-code">${escHtml(rep.credential)}</div>
+        <div class="cred-hint">This credential is unique and non-transferable. Record it and present it to AutoPurple when requested.</div>
+      </div>`;
+  }
+
+  // Astra final message
+  try {
+    const msgs = await api('/api/astra');
+    const final = msgs.filter(m => m.phase === 4);
+    if (final.length) {
+      document.getElementById('report-astra').innerHTML = `
+        <div class="astra-card">
+          <div class="astra-badge">▸ Final Message from Astra</div>
+          <div class="astra-text">${escHtml(final[final.length-1].content)}</div>
+        </div>`;
+    }
+  } catch(_) {}
+
+  showView('v-report');
+}
+
+// ── Astra modal ────────────────────────────────────────────────────────────────
+function showAstraModal(content) {
+  document.getElementById('astra-modal-text').textContent = content;
+  document.getElementById('astra-modal').style.display = 'flex';
+}
+function closeAstraModal() {
+  document.getElementById('astra-modal').style.display = 'none';
+}
+
+// ── Admin ──────────────────────────────────────────────────────────────────────
+// ── Config ─────────────────────────────────────────────────────────────────────
+async function loadConfigSection() {
+  try {
+    const c = await api(`/api/config?key=${encodeURIComponent(S.adminKey)}`);
+    document.getElementById('cfg-code').value  = c.access_code  || '';
+    document.getElementById('cfg-name').value  = c.candidate_name || '';
+    const st = document.getElementById('cfg-apikey-status');
+    if (c.api_key_set) {
+      st.className = 'cfg-status set';
+      st.textContent = `✓ Key configured (${c.api_key_preview})`;
+    } else {
+      st.className = 'cfg-status unset';
+      st.textContent = '⚠ No API key — Claude features will not work';
+    }
+  } catch(_) {}
+}
+
+function toggleApiKeyVisibility() {
+  const inp = document.getElementById('cfg-apikey');
+  inp.type  = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function saveConfig() {
+  const key  = document.getElementById('cfg-apikey').value.trim();
+  const code = document.getElementById('cfg-code').value.trim();
+  const name = document.getElementById('cfg-name').value.trim();
+  const msg  = document.getElementById('cfg-save-msg');
+  const err  = document.getElementById('cfg-save-err');
+  msg.style.display = 'none';
+  err.style.display = 'none';
+
+  const body = {};
+  if (key)  body.anthropic_api_key = key;
+  if (code) body.access_code       = code;
+  if (name) body.candidate_name    = name;
+
+  if (!Object.keys(body).length) { err.textContent = 'Nothing to save.'; err.style.display='inline'; return; }
+
+  try {
+    const r = await api(`/api/config?key=${encodeURIComponent(S.adminKey)}`, 'POST', body);
+    document.getElementById('cfg-apikey').value = '';
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+    await loadConfigSection();
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = 'inline';
+  }
+}
+
+async function loadAdmin() {
+  await loadConfigSection();
+  try {
+    const d = await api(`/api/admin?key=${encodeURIComponent(S.adminKey)}`);
+    const ov = document.getElementById('admin-overview');
+    ov.innerHTML = `
+      <div class="admin-title">Candidate Overview</div>
+      <table class="admin-table">
+        <tr><th>Candidate</th><th>Status</th><th>Time Left</th></tr>
+        <tr>
+          <td>${escHtml(d.candidate)}</td>
+          <td><span class="badge ${d.status}">${d.status}</span></td>
+          <td>${d.time_left ? `${d.time_left.days}d ${d.time_left.hours}h ${d.time_left.minutes}m` : 'Not started'}</td>
+        </tr>
+      </table>
+      <div style="margin-top:16px">
+        <table class="admin-table">
+          <tr><th>Phase</th><th>Status</th><th>Score</th><th>Summary</th></tr>
+          ${d.phases.map(p => `<tr>
+            <td>Phase ${p.phase_num}</td>
+            <td><span class="badge ${p.status}">${p.status}</span></td>
+            <td>${p.score ?? '—'}/100</td>
+            <td style="max-width:320px;color:var(--muted)">${escHtml(p.eval?.feedback_summary || '—')}</td>
+          </tr>`).join('')}
+        </table>
+      </div>`;
+
+    const ov2 = document.getElementById('admin-overrides');
+    ov2.innerHTML = `<div class="admin-override">
+      ${[1,2,3,4].map(n => `
+        <button class="override-btn override-pass" onclick="adminOverride(${n},true)">Pass Phase ${n}</button>
+        <button class="override-btn override-fail" onclick="adminOverride(${n},false)">Fail Phase ${n}</button>
+      `).join('')}
+    </div>`;
+
+    const log = document.getElementById('admin-log');
+    log.textContent = d.messages
+      .filter(m => m.role !== 'astra')
+      .map(m => `[Phase ${m.phase}] ${m.role.toUpperCase()}: ${m.content.slice(0,200)}`)
+      .join('\n\n');
+
+    if (d.report) {
+      ov.innerHTML += `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="admin-title">Report</div>
+        <div style="font-size:12px;color:var(--text);white-space:pre-wrap">${escHtml(d.report.text || '')}</div>
+        ${d.report.credential ? `<div style="margin-top:8px;color:var(--accent2);font-family:var(--mono)">${escHtml(d.report.credential)}</div>` : ''}
+      </div>`;
+    }
+  } catch (e) {
+    document.getElementById('admin-overview').textContent = `Error: ${e.message}`;
+  }
+}
+
+async function adminOverride(phase, passed) {
+  if (!confirm(`Override Phase ${phase} → ${passed ? 'PASS' : 'FAIL'}?`)) return;
+  try {
+    await api(`/api/admin/override?phase_num=${phase}&passed=${passed}&key=${encodeURIComponent(S.adminKey)}`, 'POST', {});
+    await loadAdmin();
+    alert('Done');
+  } catch(e) { alert(e.message); }
+}
+
+// ── API helper ─────────────────────────────────────────────────────────────────
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const txt = await r.text();
+    let msg = txt;
+    try { msg = JSON.parse(txt).detail || txt; } catch(_) {}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+// ── Utility ────────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+showView('v-login');
+</script>
+</body>
+</html>
