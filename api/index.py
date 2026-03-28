@@ -577,6 +577,16 @@ def _finalize_trial(trial_id: int):
 app = FastAPI(title="Operation Martina", docs_url=None, redoc_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# ── Serve frontend ─────────────────────────────────────────────────────────────
+from fastapi.responses import HTMLResponse as _HTMLResponse
+
+@app.get("/")
+def serve_index():
+    p = Path(__file__).parent.parent / "public" / "index.html"
+    if p.exists():
+        return _HTMLResponse(p.read_text())
+    return _HTMLResponse("<h1>AutoPurple — Operation MARTINA</h1><p>Frontend not found.</p>")
+
 # ── Auth ───────────────────────────────────────────────────────────────────────
 class LoginReq(BaseModel):
     code: str
