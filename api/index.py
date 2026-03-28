@@ -904,3 +904,7 @@ def admin_override(phase_num: int, passed: bool, key: str = ""):
     if passed and phase_num == 4:
         _finalize_trial(tid)
     return {"ok": True}
+
+# Vercel handler export
+from mangum import Mangum
+handler = Mangum(app, lifespan="off")
