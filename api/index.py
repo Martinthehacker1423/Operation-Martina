@@ -583,7 +583,7 @@ from fastapi.responses import HTMLResponse as _HTMLResponse
 
 @app.get("/")
 def serve_index():
-    p = Path(__file__).parent.parent / "public" / "index.html"
+    p = Path(__file__).parent / "frontend.html"
     if p.exists():
         return _HTMLResponse(p.read_text())
     return _HTMLResponse("<h1>AutoPurple — Operation MARTINA</h1><p>Frontend not found.</p>")
